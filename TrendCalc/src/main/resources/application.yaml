@@ -1,0 +1,22 @@
+constants:
+  safeBound:
+    yml:
+      int: 400
+  mediumBound:
+    yml:
+      int: 1200
+  avg_num:
+    yml:
+      int: 6
+  prev:
+    yml:
+      int: 1
+  total:
+    yml:
+      string: Total
+  stateUnassigned:
+    yml:
+      string: State Unassigned
+ 
+  
+

@@ -1,0 +1,68 @@
+package com.spring.security.controller;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.spring.security.entity.AuthRequest;
+import com.spring.security.entity.User;
+import com.spring.security.repository.UserRepostory;
+import com.spring.security.util.JwtUtil;
+
+@RestController
+public class SpringSecurityController {
+
+	@Autowired
+	UserRepostory repo;
+
+	@Autowired
+	private JwtUtil jwtUtil;
+
+	@Autowired
+	private AuthenticationManager authenticationManager;
+
+	/**
+	 * Test method after giving bearer token
+	 * @return boolean
+	 */
+	@GetMapping(value = "/")
+	public Boolean welcome() {
+		return true;
+	}
+	
+	@PostConstruct
+	public void initUsers() {
+		List<User> users = Stream.of(
+				new User(101, "Alloran", "Saini@all", "ab@gmail.com"),
+				new User(102, "Saini", "Allo@11", "abc@gmail.com"))
+				.collect(Collectors.toList());
+	}
+	/**
+	 * login method to get the token
+	 * @param authRequest
+	 * @return token
+	 * @throws Exception
+	 */
+	@PostMapping("/login")
+	public String doLogin(@RequestBody AuthRequest authRequest) throws Exception {
+		try {
+			authenticationManager.authenticate(
+					new UsernamePasswordAuthenticationToken(authRequest.getUserName(), authRequest.getPassword()));
+		} catch (Exception e) {
+			throw new Exception("Invalid username/password");
+		}
+		return jwtUtil.generateToken(authRequest.getUserName());
+		
+	}
+}

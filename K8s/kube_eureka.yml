@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trendcalc-eureka-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trendcalc-eureka-service
+  template:
+    metadata:
+      labels:
+        app: trendcalc-eureka-service
+    spec:
+      containers:
+      - name: trendcalc-eureka-service
+        image: gcr.io/my-project-k35573/gcp-eureka:v1
+        ports:
+          - containerPort: 8761
+      nodeSelector:
+        nodetype: eureka
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trendcalc-eureka-service
+  labels:
+    name: trendcalc-eureka-service
+spec:
+  ports:
+    - port: 8761
+      targetPort: 8761
+      protocol: TCP
+  selector:
+    app: trendcalc-eureka-service
+  type: ClusterIP

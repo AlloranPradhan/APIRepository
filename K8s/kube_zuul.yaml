@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trendcalc-zuul-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trendcalc-zuul-service
+  template:
+    metadata:
+      labels:
+        app: trendcalc-zuul-service
+    spec:
+      containers:
+      - env:
+        - name: JAVA_OPTS
+          value: ' -DEUREKA_SERVER=http://trendcalc-eureka-service:8761/eureka'
+        name: trendcalc-zuul-service
+        image: gcr.io/my-project-k35573/gcp-zuul:v1
+        ports:
+          - containerPort: 3333
+      nodeSelector:
+        nodetype: ui_zuul
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trendcalc-zuul-service
+  labels:
+    name: trendcalc-zuul-service
+spec:
+  ports:
+    - port: 3333
+      targetPort: 3333
+      protocol: TCP
+  selector:
+    app: trendcalc-zuul-service
+  type: ClusterIP

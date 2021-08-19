@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trendcalc-ui-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trendcalc-service
+  template:
+    metadata:
+      labels:
+        app: trendcalc-service
+    spec:
+      containers:
+      - name: trendcalc-ui-service
+        image: gcr.io/my-project-k35573/gcp-ui:v2
+        ports:
+          - containerPort: 4200
+      nodeSelector:
+        nodetype: ui_zuul
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trendcalc-ui-service
+spec:
+  ports:
+    - port: 4200
+      targetPort: 4200
+      protocol: TCP
+  selector:
+    app: trendcalc-service
+  type: ClusterIP

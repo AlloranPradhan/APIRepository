@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trendcalc-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trendcalc-service
+  template:
+    metadata:
+      labels:
+        app: trendcalc-service
+    spec:
+      containers:
+        - env:
+          - name: JAVA_OPTS
+            value: ' -DEUREKA_SERVER=http://trendcalc-eureka-service:8761/eureka'
+          - name: SPRING_DATASOURCE_URL
+            value: jdbc:mysql://trendcalc-db:3307/mydatabase?autoReconnect=true&allowPublicKeyRetrieval=true&useSSL=false
+          name: trendcalc-service
+          image: gcr.io/my-project-k35573/gcp-trendcalc-api:v1
+          ports:
+            - containerPort: 8082
+          volumeMounts:
+            - mountPath: /home/files
+              name: myfiles
+      restartPolicy: Always
+      nodeSelector:
+        nodetype: backend_db
+      volumes:
+        - name: myfiles
+          emptyDir: {}
+status: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trendcalc-service
+  labels:
+    name: trendcalc-service
+spec:
+  ports:
+    - port: 8082
+      targetPort: 8082
+      protocol: TCP
+  selector:
+    app: trendcalc-service
+  type: ClusterIP

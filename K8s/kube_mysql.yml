@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trendcalc-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: trendcalc-db
+  template:
+    metadata:
+      labels:
+        app: trendcalc-db
+    spec:
+      containers:
+        - env:
+          - name: MYSQL_DATABASE
+            value: mydatabase 
+          - name: MYSQL_ROOT_PASSWORD
+            value: root
+          - name: MYSQL_TCP_PORT
+            value: "3307"
+          name: trendcalc-db
+          image: gcr.io/my-project-k35573/gcp-mysql:v1
+          ports:
+            - containerPort: 3307
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: dbdata
+      restartPolicy: Always
+      nodeSelector:
+          nodetype: backend_db 
+      volumes:
+        - name: dbdata
+          emptyDir: {}
+status: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trendcalc-db
+  labels:
+    name: trendcalc-db
+spec:
+  ports:
+    - port: 3308
+      targetPort: 3307
+      protocol: TCP
+  selector:
+    app: trendcalc-db
+  type: ClusterIP

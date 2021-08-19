@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-resource
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+  - http:
+      paths:
+      - path:
+        pathType: Prefix
+        backend:
+          serviceName: trendcalc-service
+          servicePort: 8082
+      - backend:
+          serviceName: trendcalc-service
+          servicePort: 8082
+        path: /getSafe
+      - backend:
+          serviceName: trendcalc-service
+          servicePort: 8082
+        path: /getWarn
+      - backend:
+          serviceName: trendcalc-ui-service
+          servicePort: 4200
+        path: /home
+      - backend:
+          serviceName: trendcalc-ui-service
+          servicePort: 4200
+        path: /

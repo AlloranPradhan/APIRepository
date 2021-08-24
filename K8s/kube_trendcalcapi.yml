@@ -12,6 +12,7 @@ spec:
       labels:
         app: trendcalc-service
     spec:
+      hostname: trendcalc-service
       containers:
         - env:
           - name: JAVA_OPTS

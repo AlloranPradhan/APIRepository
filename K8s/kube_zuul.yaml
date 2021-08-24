@@ -12,12 +12,10 @@ spec:
       labels:
         app: trendcalc-zuul-service
     spec:
+      hostname: trendcalc-zuul-service
       containers:
-      - env:
-        - name: JAVA_OPTS
-          value: ' -DEUREKA_SERVER=http://trendcalc-eureka-service:8761/eureka'
-        name: trendcalc-zuul-service
-        image: gcr.io/my-project-k35573/gcp-zuul:v1
+      - name: trendcalc-zuul-service
+        image: gcr.io/my-project-k35573/zuul:v5
         ports:
           - containerPort: 3333
       nodeSelector:

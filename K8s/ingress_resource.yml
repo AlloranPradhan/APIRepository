@@ -9,19 +9,23 @@ spec:
   rules:
   - http:
       paths:
-      - path:
+      - path: /getAllStats
         pathType: Prefix
         backend:
-          serviceName: trendcalc-service
-          servicePort: 8082
+          serviceName: trendcalc-zuul-service
+          servicePort: 3333
       - backend:
-          serviceName: trendcalc-service
-          servicePort: 8082
+          serviceName: trendcalc-zuul-service
+          servicePort: 3333
         path: /getSafe
       - backend:
-          serviceName: trendcalc-service
-          servicePort: 8082
+          serviceName: trendcalc-zuul-service
+          servicePort: 3333
         path: /getWarn
+      - backend:
+          serviceName: trendcalc-zuul-service
+          servicePort: 3333
+        path: /getTourist/
       - backend:
           serviceName: trendcalc-ui-service
           servicePort: 4200

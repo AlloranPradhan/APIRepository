@@ -44,7 +44,7 @@ metadata:
     name: trendcalc-db
 spec:
   ports:
-    - port: 3308
+    - port: 3307
       targetPort: 3307
       protocol: TCP
   selector:

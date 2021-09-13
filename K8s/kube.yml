@@ -1,0 +1,298 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trendcalc-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: trendcalc-db
+  template:
+    metadata:
+      labels:
+        app: trendcalc-db
+    spec:
+      containers:
+        - env:
+          - name: MYSQL_DATABASE
+            value: mydatabase 
+          - name: MYSQL_ROOT_PASSWORD
+            value: root
+          - name: MYSQL_TCP_PORT
+            value: "3307"
+          name: trendcalc-db
+          image: gcr.io/my-project-k35573/gcp-mysql:v1
+          ports:
+            - containerPort: 3307
+          resources:
+            requests:
+              memory: "50Mi"
+              cpu: "200m"
+            limits:
+              memory: "500Mi"
+              cpu: "1000m"
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: dbdata
+      restartPolicy: Always 
+      volumes:
+        - name: dbdata
+          persistentVolumeClaim: 
+            claimName: dbdata 
+status: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trendcalc-db
+  labels:
+    name: trendcalc-db
+spec:
+  ports:
+    - port: 3307
+      targetPort: 3307
+      protocol: TCP
+  selector:
+    app: trendcalc-db
+  type: ClusterIP
+  
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dbdata
+  labels:
+    name: dbdata
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+status: {}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trendcalc-eureka-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trendcalc-eureka-service
+  template:
+    metadata:
+      labels:
+        app: trendcalc-eureka-service
+    spec:
+      containers:
+      - name: trendcalc-eureka-service
+        image: gcr.io/my-project-k35573/gcp-eureka:v1
+        ports:
+          - containerPort: 8761
+        resources:
+          requests:
+            memory: "50Mi"
+            cpu: "200m"
+          limits:
+            memory: "500Mi"
+            cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trendcalc-eureka-service
+  labels:
+    name: trendcalc-eureka-service
+spec:
+  ports:
+    - port: 8761
+      targetPort: 8761
+      protocol: TCP
+  selector:
+    app: trendcalc-eureka-service
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trendcalc-ui-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trendcalc-service
+  template:
+    metadata:
+      labels:
+        app: trendcalc-service
+    spec:
+      containers:
+      - name: trendcalc-ui-service
+        image: gcr.io/my-project-k35573/gcp-ui:v3
+        ports:
+          - containerPort: 4200
+        resources:
+          requests:
+            memory: "50Mi"
+            cpu: "300m"
+          limits:
+            memory: "1000Mi"
+            cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trendcalc-ui-service
+spec:
+  ports:
+    - port: 4200
+      targetPort: 4200
+      protocol: TCP
+  selector:
+    app: trendcalc-service
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trendcalc-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trendcalc-service
+  template:
+    metadata:
+      labels:
+        app: trendcalc-service
+    spec:
+      hostname: trendcalc-service
+      containers:
+        - env:
+          - name: JAVA_OPTS
+            value: ' -DEUREKA_SERVER=http://trendcalc-eureka-service:8761/eureka'
+          - name: SPRING_DATASOURCE_URL
+            value: jdbc:mysql://trendcalc-db:3307/mydatabase?autoReconnect=true&allowPublicKeyRetrieval=true&useSSL=false
+          name: trendcalc-service
+          image: gcr.io/my-project-k35573/gcp-trendcalc-api:v3
+          ports:
+            - containerPort: 8082
+          resources:
+            requests:
+              cpu: "200m"
+            limits:
+              cpu: "1000m"
+          volumeMounts:
+            - mountPath: /home/files
+              name: myfiles
+      restartPolicy: Always
+      volumes:
+        - name: myfiles
+          emptyDir: {}
+status: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trendcalc-service
+  labels:
+    name: trendcalc-service
+spec:
+  ports:
+    - port: 8082
+      targetPort: 8082
+      protocol: TCP
+  selector:
+    app: trendcalc-service
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trendcalc-zuul-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trendcalc-zuul-service
+  template:
+    metadata:
+      labels:
+        app: trendcalc-zuul-service
+    spec:
+      hostname: trendcalc-zuul-service
+      containers:
+      - env:
+        - name: JAVA_OPTS
+          value: ' -DEUREKA_SERVER=http://trendcalc-eureka-service:8761/eureka'
+        name: trendcalc-zuul-service
+        image: gcr.io/my-project-k35573/zuul:v5
+        ports:
+          - containerPort: 3333
+        resources:
+          requests:
+            memory: "50Mi"
+            cpu: "250m"
+          limits:
+            memory: "500Mi"
+            cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trendcalc-zuul-service
+  labels:
+    name: trendcalc-zuul-service
+spec:
+  ports:
+    - port: 3333
+      targetPort: 3333
+      protocol: TCP
+  selector:
+    app: trendcalc-zuul-service
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-resource
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /getAllStats
+        pathType: Prefix
+        backend:
+          serviceName: trendcalc-zuul-service
+          servicePort: 3333
+      - backend:
+          serviceName: trendcalc-zuul-service
+          servicePort: 3333
+        path: /getSafe
+      - backend:
+          serviceName: trendcalc-zuul-service
+          servicePort: 3333
+        path: /getWarn
+      - backend:
+          serviceName: trendcalc-zuul-service
+          servicePort: 3333
+        path: /getTourist/
+      - backend:
+          serviceName: trendcalc-ui-service
+          servicePort: 4200
+        path: /home
+      - backend:
+          serviceName: trendcalc-ui-service
+          servicePort: 4200
+        path: /
